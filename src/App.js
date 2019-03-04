@@ -1,5 +1,5 @@
-import React, {Component, Fragment} from 'react';
-import {Route, Switch, Redirect, withRouter} from 'react-router-dom';
+import React, { Component, Fragment } from 'react';
+import { Route, Switch, Redirect, withRouter } from 'react-router-dom';
 
 import Layout from './components/Layout/Layout';
 import Backdrop from './components/Backdrop/Backdrop';
@@ -37,20 +37,20 @@ class App extends Component {
         const userId = localStorage.getItem('userId');
         const remainingMilliseconds =
             new Date(expiryDate).getTime() - new Date().getTime();
-        this.setState({isAuth: true, token: token, userId: userId});
+        this.setState({ isAuth: true, token: token, userId: userId });
         this.setAutoLogout(remainingMilliseconds);
     }
 
     mobileNavHandler = isOpen => {
-        this.setState({showMobileNav: isOpen, showBackdrop: isOpen});
+        this.setState({ showMobileNav: isOpen, showBackdrop: isOpen });
     };
 
     backdropClickHandler = () => {
-        this.setState({showBackdrop: false, showMobileNav: false, error: null});
+        this.setState({ showBackdrop: false, showMobileNav: false, error: null });
     };
 
     logoutHandler = () => {
-        this.setState({isAuth: false, token: null});
+        this.setState({ isAuth: false, token: null });
         localStorage.removeItem('token');
         localStorage.removeItem('expiryDate');
         localStorage.removeItem('userId');
@@ -59,16 +59,20 @@ class App extends Component {
     loginHandler = (event, authData) => {
         event.preventDefault();
         const graphqlQuery = {
-            query: `{
-                login(email: "${authData.email}",
-                 password: "${authData.password}"){
-                 token
-                 userId
-                 }
-            
-            }`
+            query: `
+        query UserLogin($email: String!, $password: String!) {
+          login(email: $email, password: $password) {
+            token
+            userId
+          }
+        }
+      `,
+            variables: {
+                email: authData.email,
+                password: authData.password
+            }
         };
-        this.setState({authLoading: true});
+        this.setState({ authLoading: true });
         fetch('http://localhost:8080/graphql', {
             method: 'POST',
             headers: {
@@ -112,33 +116,34 @@ class App extends Component {
                     error: err
                 });
             });
-    }
-    ;
+    };
 
     signupHandler = (event, authData) => {
         event.preventDefault();
-        this.setState({authLoading: true});
-        const graphlQuery = {
+        this.setState({ authLoading: true });
+        const graphqlQuery = {
             query: `
-                mutation {
-                  createUser(userInput: {email: "${authData.signupForm.email.value}",
-                   name: "${authData.signupForm.name.value}",
-                    password:"${authData.signupForm.password.value}"}){
-                    _id
-                    email
-                  }
-                }
-            `
+        mutation CreateNewUser($email: String!, $name: String!, $password: String!) {
+          createUser(userInput: {email: $email, name: $name, password: $password}) {
+            _id
+            email
+          }
+        }
+      `,
+            variables: {
+                email: authData.signupForm.email.value,
+                name: authData.signupForm.name.value,
+                password: authData.signupForm.password.value
+            }
         };
         fetch('http://localhost:8080/graphql', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify(graphlQuery)
+            body: JSON.stringify(graphqlQuery)
         })
             .then(res => {
-
                 return res.json();
             })
             .then(resData => {
@@ -151,7 +156,7 @@ class App extends Component {
                     throw new Error('User creation failed!');
                 }
                 console.log(resData);
-                this.setState({isAuth: false, authLoading: false});
+                this.setState({ isAuth: false, authLoading: false });
                 this.props.history.replace('/');
             })
             .catch(err => {
@@ -171,7 +176,7 @@ class App extends Component {
     };
 
     errorHandler = () => {
-        this.setState({error: null});
+        this.setState({ error: null });
     };
 
     render() {
@@ -199,7 +204,7 @@ class App extends Component {
                         />
                     )}
                 />
-                <Redirect to="/"/>
+                <Redirect to="/" />
             </Switch>
         );
         if (this.state.isAuth) {
@@ -209,7 +214,7 @@ class App extends Component {
                         path="/"
                         exact
                         render={props => (
-                            <FeedPage userId={this.state.userId} token={this.state.token}/>
+                            <FeedPage userId={this.state.userId} token={this.state.token} />
                         )}
                     />
                     <Route
@@ -222,16 +227,16 @@ class App extends Component {
                             />
                         )}
                     />
-                    <Redirect to="/"/>
+                    <Redirect to="/" />
                 </Switch>
             );
         }
         return (
             <Fragment>
                 {this.state.showBackdrop && (
-                    <Backdrop onClick={this.backdropClickHandler}/>
+                    <Backdrop onClick={this.backdropClickHandler} />
                 )}
-                <ErrorHandler error={this.state.error} onHandle={this.errorHandler}/>
+                <ErrorHandler error={this.state.error} onHandle={this.errorHandler} />
                 <Layout
                     header={
                         <Toolbar>
